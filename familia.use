@@ -1,41 +1,25 @@
 model Familia
 
-
-class Familia
-attributes
-	nome:String
-operations
-	add(pessoa:Pessoa)
-	begin
-		insert (self, pessoa) into FamiliaPessoa;
-	end
-	remover(pessoa:Pessoa)
-	begin
-		insert (self, pessoa) into FamiliaPessoa;
-	end
-end
-
 class Pessoa
 attributes
-	nome:String
-	isVivo:Boolean
-	dataNascimento:String
-	dataMorte:String
+	nome: String
+	isVivo: Boolean
+	dataNascimento: String
+	dataMorte: String
+	sexo: String
 operations
-	addConjuge(pessoa:Pessoa)
+	addConjuge(pessoa: Pessoa)
 	begin
-		insert(self, pessoa) into Conjuge;
+		insert(self, pessoa) into Conjuge
 	end
-  addFilho(pessoa:Pessoa)
+  addFilho(pessoa: Pessoa)
   begin
     insert(pessoa, self) into Filho
     end
-end
-
-class Homem < Pessoa
-end
-
-class Mulher < Pessoa
+  getMae(pessoa: Pessoa)
+  begin
+	insert(self, pessoa) into Filho
+	end
 end
 
 association Conjuge between
@@ -43,12 +27,6 @@ association Conjuge between
 	Pessoa[1] role conjuge 
 end
 
-composition FamiliaPessoa between
-	Familia[1]
-	Pessoa[*] role membros
-end
---Tem que ver como adicionar filho
---Ele pede relação específica de paternidade/maternidade
 association Filho between
 	Pessoa[*] role filho
 	Pessoa[1..2] role pais
@@ -56,23 +34,15 @@ end
 
 constraints
 
-context Familia::add(pessoa:Pessoa)
+context Pessoa::addConjuge(pessoa: Pessoa)
 pre pessoaNaoNula: pessoa.isDefined()
-pre naoSerMembroFamilia: membros->excludes(pessoa)
-post acaoAdicionarPessoa: membros->includes(pessoa)
+post acaoCasar: conjuge -> includes(pessoa)
 
-context Familia::remover(pessoa:Pessoa)
+context Pessoa::addFilho(pessoa: Pessoa)
 pre pessoaNaoNula: pessoa.isDefined()
-pre serMembroFamilia: membros->includes(pessoa)
-post acaoRemoverPessoa: membros->excludes(pessoa)
+pre naoSerSiMesmo: self.filho -> excludes(self)
+post acaoFilho: filho -> includes(pessoa)
 
-context Pessoa::addConjuge(pessoa:Pessoa)
+context Pessoa::getMae(pessoa: Pessoa)
 pre pessoaNaoNula: pessoa.isDefined()
-post acaoCasar: conjuge->includes(pessoa)
-
-context Pessoa::addFilho(pessoa:Pessoa)
-pre pessoaNaoNula: pessoa.isDefined()
-pre naoSerSiMesmo: self.filho->excludes(self)
-post acaoFilho: filho->includes(pessoa)
-
-
+post acaoGetMae: self.pais -> forAll(c | c.sexo='Feminino')
