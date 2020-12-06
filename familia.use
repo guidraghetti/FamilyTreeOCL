@@ -8,17 +8,61 @@ attributes
 	dataMorte: String
 	sexo: String
 operations
+	getPrimos(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
+	end
+	getTios(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
+	end
+	getNetos(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
+	end
 	addConjuge(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Conjuge
+	end
+	removeConjuge(pessoa: Pessoa)
 	begin
 		insert(self, pessoa) into Conjuge
 	end
   addFilho(pessoa: Pessoa)
   begin
     insert(pessoa, self) into Filho
-    end
+  end
+	removeFilho(pessoa: Pessoa)
+	 begin
+    insert(pessoa, self) into Filho
+  end
+	getIrmaos(pessoa: Pessoa)
+	begin
+		insert(self, self) into Filho
+	end
+	getAvos(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
+	end
   getMae(pessoa: Pessoa)
   begin
-	insert(self, pessoa) into Filho
+		insert(self, pessoa) into Filho
+	end
+	getPai(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
+	end
+	getConjuge(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Conjuge
+	end
+	getIsVivo(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
+	end
+	getIsMorto(pessoa: Pessoa)
+	begin
+		insert(self, pessoa) into Filho
 	end
 end
 
@@ -36,13 +80,74 @@ constraints
 
 context Pessoa::addConjuge(pessoa: Pessoa)
 pre pessoaNaoNula: pessoa.isDefined()
+pre naoSerSiMesmo: self.filho -> excludes(self)
 post acaoCasar: conjuge -> includes(pessoa)
+
+context Pessoa::removeConjuge(pessoa: Pessoa)
+pre pessoaNaoNula: pessoa.isDefined()
+pre naoSerSiMesmo: self.filho -> includes(self)
+post acaoCasar: conjuge -> excludes(pessoa)
 
 context Pessoa::addFilho(pessoa: Pessoa)
 pre pessoaNaoNula: pessoa.isDefined()
 pre naoSerSiMesmo: self.filho -> excludes(self)
 post acaoFilho: filho -> includes(pessoa)
 
+context Pessoa::removeFilho(pessoa: Pessoa)
+pre pessoaNaoNula: pessoa.isDefined()
+pre naoSerSiMesmo: self.filho -> includes(self)
+post acaoFilho: filho -> excludes(pessoa)
+
+
+context Pessoa::getIrmaos(pessoa: Pessoa)
+pre pessoaNaoNula: pessoa.isDefined()
+pre naoSerSiMesmo: self.filho -> excludes(self)
+post acaoGetIrmaos: self.pais -> forAll(c | c = c)
+
+
+context Pessoa::getConjuge(pessoa: Pessoa)
+pre pessoaNaoNula: pessoa.isDefined()
+post acaoGetConjuge: self.conjuge.isDefined()
+
 context Pessoa::getMae(pessoa: Pessoa)
 pre pessoaNaoNula: pessoa.isDefined()
 post acaoGetMae: self.pais -> forAll(c | c.sexo='Feminino')
+
+context Pessoa::getPai(pessoa: Pessoa)
+pre pessoaNaoNula: pessoa.isDefined()
+post acaoGetPai: self.pais -> forAll(c | c.sexo='Masculino')
+
+context Pessoa::getIsVivo(pessoa: Pessoa)
+pre pessoaNaoNula: pessoa.isDefined()
+post acaoGetIsVivo: self.pais -> forAll(c | c.isVivo=true)
+
+context Pessoa::getIsMorto(pessoa: Pessoa)
+post acaoGetIsMorto: self.pais -> forAll(c | c.isVivo=false)
+
+context Pessoa::getNetos(pessoa: Pessoa)
+post acaoGetNetos: self.filho.filho -> forAll(c | c = c)
+
+context Pessoa::getTios(pessoa: Pessoa)
+pre naoSerSiMesmo: self.filho -> excludes(self)
+post acaoGetTios: self.pais.pais.filho -> forAll(c | c = c)
+
+context Pessoa::getPrimos(pessoa: Pessoa)
+pre naoSerSiMesmo: self.filho -> excludes(self)
+post acaoGetPrimos: self.pais.pais.filho.filho -> forAll(c | c = c)
+
+context Pessoa::getAvos(pessoa: Pessoa)
+post acaoGetAvos: self.pais.pais -> forAll(c | c = c)
+
+-- invariantes
+context p:Pessoa inv naoSerPaiDeSiMesmo:
+p.pais -> forAll(c | c <> p)
+
+context p:Pessoa inv naoSerConjugeDeSiMesmo:
+p.conjuge <> p
+
+context p1, p2 : Pessoa inv nomesUnicos:
+p1 <> p2 implies(p1.nome <> p2.nome or p1.nome <> p2.nome)
+
+context p : Pessoa inv aciclicoParente:
+p.filho -> closure(filho) -> excludes(p)
+
