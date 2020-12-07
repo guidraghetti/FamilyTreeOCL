@@ -128,7 +128,7 @@ context Pessoa::getNetos(pessoa: Pessoa)
 post acaoGetNetos: self.filho.filho -> forAll(c | c = c)
 
 context Pessoa::getTios(pessoa: Pessoa)
-pre naoSerSiMesmo: self.filho -> excludes(self)
+pre naoSerSiMesmo: self.pais -> excludes(self)
 post acaoGetTios: self.pais.pais.filho -> forAll(c | c = c)
 
 context Pessoa::getPrimos(pessoa: Pessoa)
@@ -150,4 +150,3 @@ p1 <> p2 implies(p1.nome <> p2.nome or p1.nome <> p2.nome)
 
 context p : Pessoa inv aciclicoParente:
 p.filho -> closure(filho) -> excludes(p)
-
